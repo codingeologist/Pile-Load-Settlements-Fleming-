@@ -3,15 +3,15 @@ import matplotlib.pyplot as plt
 
 #Settlement Calculation
 ##Piling Properties
-Us = 836      #Ultimate Shaft Capacity kN 836
-Ub = 112      #Ultimate Base Capacity kN 112
-Ds = 0.3      #Pile diameter m 0.3
-Eb = 76500    #Soil modulus below pile base kPa (Eu/Cu=450) 76500
+Us = 836      #Ultimate Shaft Capacity kN 
+Ub = 112      #Ultimate Base Capacity kN 
+Ds = 0.3      #Pile diameter m 
+Eb = 76500    #Soil modulus below pile base kPa
 Ec = 31000000 #Concrete modulus kPa
-Ms = 0.001    #OC Clay, 0.001-0.002 (0.004-0.0005 in soft to firm clays)
-Pt = 445      #Load kN 445
-Lo = 2.5      #Length without friction m 2.5
-Lf = 12.5     #Length with friction m 12.5
+Ms = 0.001    #Overconsolidated Clay; 0.001-0.002 (0.004-0.0005 in soft to firm clays)
+Pt = 445      #Load kN 
+Lo = 2.5      #Length without friction m 
+Lf = 12.5     #Length with friction m 
 Ke = 0.45     #Effective Lf length factor (0.45 for London Clay)
 load_arr = np.linspace(0,Pt,11)
 
