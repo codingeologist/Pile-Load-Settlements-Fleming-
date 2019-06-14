@@ -1,60 +1,76 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-#Settlement Calculation
-##Piling Properties
-Us = 836      #Ultimate Shaft Capacity kN 
-Ub = 112      #Ultimate Base Capacity kN 
-Ds = 0.3      #Pile diameter m 
-Eb = 76500    #Soil modulus below pile base kPa
-Ec = 31000000 #Concrete modulus kPa
-Ms = 0.001    #Overconsolidated Clay; 0.001-0.002 (0.004-0.0005 in soft to firm clays)
-Pt = 445      #Load kN 
-Lo = 2.5      #Length without friction m 
-Lf = 12.5     #Length with friction m 
-Ke = 0.45     #Effective Lf length factor (0.45 for London Clay)
-load_arr = np.linspace(0,Pt,11)
+class load_settlement:
 
-##Calculation Variables
-a = Us 
-b = Ds * Eb * Ub
-c = Ms * Ds
-d = 0.60 * Ub
-e = Ds * Eb
-f = e * load_arr - a * e - b
-g = d * load_arr + e * c * load_arr - a * d - b * c
-h = c * d * load_arr
+    #Settlement Calculation
+    ##Piling Properties
+    def parameters(self):
+        self.Us = 836      #Ultimate Shaft Capacity kN 836
+        self.Ub = 112      #Ultimate Base Capacity kN 112
+        self.Ds = 0.3      #Pile diameter m 0.3
+        self.Eb = 76500    #Soil modulus below pile base kPa (Eu/Cu=450) 76500
+        self.Ec = 31000000 #Concrete modulus kPa
+        self.Ms = 0.001    #OC Clay, 0.001-0.002 (0.004-0.0005 in soft to firm clays)
+        self.Pt = 445      #Load kN 445
+        self.Lo = 2.5      #Length without friction m 2.5
+        self.Lf = 12.5     #Length with friction m 12.5
+        self.Ke = 0.45     #Effective Lf length factor (0.45 for London Clay)
+        self.load_arr = np.linspace(0,self.Pt,11)
+        
+        ##Calculation Variables
+        self.a = self.Us 
+        self.b = self.Ds * self.Eb * self.Ub
+        self.c = self.Ms * self.Ds
+        self.d = 0.60 * self.Ub
+        self.e = self.Ds * self.Eb
+        self.f = self.e * self.load_arr - self.a * self.e - self.b
+        self.g = self.d * self.load_arr + self.e * self.c * self.load_arr - self.a * self.d - self.b * self.c
+        self.h = self.c * self.d * self.load_arr
+    
+    ##Rigid Settlement
+    def rigid(self):
+        self.del_t1 = ((-self.g+np.sqrt((self.g**2)-4*self.f*self.h))/(2*self.f))*1000
+        self.del_t2 = ((-self.g-np.sqrt((self.g**2)-4*self.f*self.h))/(2*self.f))*1000
+        self.del_t = []
+        for i in np.arange(len(self.del_t1)):
+            if self.del_t1[i] > self.del_t2[i]:
+                self.del_t.append(self.del_t1[i])
+            else:
+                self.del_t.append(self.del_t2[i])
+    
+    ##Elastic Shortening
+    def elastic(self):
+        self.del_e = []
+        for i in np.arange(len(self.load_arr)):
+            if self.load_arr[i] <= self.Us:
+                self.del_e.append(4/np.pi * (self.load_arr[i]*(self.Lo+self.Ke*self.Lf))/(self.Ds**2 * self.Ec)*1000)
+            else:
+                self.del_e.append(4/np.pi * 1/(self.Ds**2 * self.Ec) * (self.load_arr[i]*(self.Lo+self.Lf)-self.Lf*self.Us*(1-self.Ke))*1000)
+    
+    ##Total Settlement
+    def total(self):    
+        self.del_total = [x + y for x, y in zip(self.del_e, self.del_t)]
+    
+    ##Plot Formatting
+    def plots(self):
+        fig = plt.figure(1,figsize=(10,10))
+        ax1 = plt.subplot2grid((1,1),(0,0),rowspan=1,colspan=2)
+        ax1.plot(self.load_arr,self.del_t,'g--',label='Rigid Settlement')
+        ax1.plot(self.load_arr,self.del_e,'b--',label='Elastic Shortening')
+        ax1.plot(self.load_arr,self.del_total,'r--',label='Total Settlement')
+        ax1.set_xlim(0,np.max(self.Pt))
+        ax1.set_ylim(np.max(self.del_total),0)
+        ax1.set_ylabel('Settlement (mm)')
+        ax1.set_xlabel('Load (kN)')
+        ax1.legend()
+        ax1.grid(b=True)
+        
+    def main(self):
+        ls.rigid()
+        ls.elastic()
+        ls.total()
+        ls.plots()
 
-##Rigid Settlement
-del_t1 = ((-g+np.sqrt((g**2)-4*f*h))/(2*f))*1000
-del_t2 = ((-g-np.sqrt((g**2)-4*f*h))/(2*f))*1000
-del_t = []
-for i in np.arange(len(del_t1)):
-    if del_t1[i] > del_t2[i]:
-        del_t.append(del_t1[i])
-    else:
-        del_t.append(del_t2[i])
-
-##Elastic Shortening
-del_e = []
-for i in np.arange(len(load_arr)):
-    if load_arr[i] <= Us:
-        del_e.append(4/np.pi * (load_arr[i]*(Lo+Ke*Lf))/(Ds**2 * Ec)*1000)
-    else:
-        del_e.append(4/np.pi * 1/(Ds**2 * Ec) * (load_arr[i]*(Lo+Lf)-Lf*Us*(1-Ke))*1000)
-
-##Total Settlement
-del_total = [x + y for x, y in zip(del_e, del_t)]
-
-#Plot Formatting
-fig = plt.figure(1,figsize=(10,10))
-ax1 = plt.subplot2grid((1,1),(0,0),rowspan=1,colspan=2)
-ax1.plot(load_arr,del_t,'g--',label='Rigid Settlement')
-ax1.plot(load_arr,del_e,'b--',label='Elastic Shortening')
-ax1.plot(load_arr,del_total,'r--',label='Total Settlement')
-ax1.set_xlim(0,np.max(Pt))
-ax1.set_ylim(np.max(del_total),0)
-ax1.set_ylabel('Settlement (mm)')
-ax1.set_xlabel('Load (kN)')
-ax1.legend()
-ax1.grid(b=True)
+ls = load_settlement()
+ls.main()
